@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order History - Mini Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem 0; text-align: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; }
+        .order-card { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e0e0e0; }
+        .order-id { font-size: 1.2rem; font-weight: 600; }
+        .order-date { color: #666; }
+        .status { padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.shipped { background: #cce5ff; color: #004085; }
+        .status.delivered { background: #d4edda; color: #155724; }
+        .status.cancelled { background: #f8d7da; color: #721c24; }
+        .order-details { margin: 1rem 0; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+        .total { font-size: 1.3rem; font-weight: bold; color: #667eea; border-top: 2px solid #e0e0e0; padding-top: 1rem; margin-top: 1rem; }
+        .empty-state { text-align: center; padding: 4rem 2rem; }
+        .empty-state h2 { color: #666; margin-bottom: 1rem; }
+        .shop-btn { display: inline-block; padding: 1rem 2rem; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin-top: 1rem; }
+        .shop-btn:hover { background: #5568d3; }
+    </style>
+</head>
+<body>
+    <div class="header"><h1>📦 Order History</h1></div>
+    
+    <div class="container">
+        <div id="ordersContainer"></div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h2>No orders yet</h2>
+            <p>Start shopping to see your order history here!</p>
+            <a href="/products" class="shop-btn">Start Shopping</a>
+        </div>
+    </div>
+    
+    <script>
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/orders/my-orders');
+                const data = await response.json();
+                const orders = data.data || [];
+                
+                const ordersContainer = document.getElementById('ordersContainer');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (orders.length === 0) {
+                    ordersContainer.style.display = 'none';
+                    emptyState.style.display = 'block';
+                } else {
+                    ordersContainer.style.display = 'block';
+                    emptyState.style.display = 'none';
+                    
+                    ordersContainer.innerHTML = orders.map(order => `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div>
+                                    <div class="order-id">Order #${order.id}</div>
+                                    <div class="order-date">${new Date(order.createdAt).toLocaleString()}</div>
+                                </div>
+                                <span class="status ${order.status.toLowerCase()}">${order.status}</span>
+                            </div>
+                            
+                            <div class="order-details">
+                                <div class="detail-row">
+                                    <span><strong>Shipping Address:</strong></span>
+                                    <span>${order.shippingAddress || 'N/A'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span><strong>Payment Status:</strong></span>
+                                    <span>${order.paymentStatus || 'Pending'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span><strong>Number of Items:</strong></span>
+                                    <span>${order.items ? order.items.length : 'N/A'}</span>
+                                </div>
+                                <div class="detail-row total">
+                                    <span>Total Amount:</span>
+                                    <span>BDT ${order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</body>
+</html>

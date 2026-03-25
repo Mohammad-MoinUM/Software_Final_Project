@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout - Mini Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem 0; text-align: center; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 20px; }
+        .checkout-form { background: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }
+        .form-section { margin-bottom: 2rem; }
+        .form-section h2 { margin-bottom: 1rem; color: #333; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; }
+        .payment-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+        .payment-option { padding: 1rem; border: 2px solid #e0e0e0; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .payment-option:hover { border-color: #667eea; }
+        .payment-option.selected { border-color: #667eea; background: #f8f9ff; }
+        .payment-option input[type="radio"] { display: none; }
+        .order-summary { background: #f8f9ff; padding: 1.5rem; border-radius: 8px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+        .summary-row.total { font-size: 1.3rem; font-weight: bold; border-top: 2px solid #e0e0e0; padding-top: 1rem; margin-top: 1rem; }
+        .place-order-btn { width: 100%; padding: 1rem; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 1rem; }
+        .place-order-btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="header"><h1>🛒 Checkout</h1></div>
+    <div class="container">
+        <form id="checkoutForm" class="checkout-form">
+            <div class="form-section">
+                <h2>Shipping Information</h2>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Shipping Address *</label>
+                    <textarea id="address" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>City *</label>
+                    <input type="text" id="city" required>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Payment Method</h2>
+                <div class="payment-methods">
+                    <label class="payment-option selected">
+                        <input type="radio" name="payment" value="CARD" checked>
+                        <div>💳 Card</div>
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="BKASH">
+                        <div>📱 bKash</div>
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="NAGAD">
+                        <div>📱 Nagad</div>
+                    </label>
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="CASH_ON_DELIVERY">
+                        <div>💵 Cash on Delivery</div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="order-summary">
+                <h2>Order Summary</h2>
+                <div class="summary-row"><span>Subtotal</span><span id="subtotal">BDT 0</span></div>
+                <div class="summary-row"><span>Shipping</span><span>BDT 50</span></div>
+                <div class="summary-row"><span>Tax</span><span id="tax">BDT 0</span></div>
+                <div class="summary-row total"><span>Total</span><span id="total">BDT 0</span></div>
+            </div>
+            
+            <button type="submit" class="place-order-btn">Place Order</button>
+        </form>
+    </div>
+    
+    <script>
+        let cartTotal = 0;
+        
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+        
+        async function loadCartSummary() {
+            try {
+                const response = await fetch('/api/cart/total');
+                const data = await response.json();
+                const subtotal = data.data || 0;
+                const shipping = 50;
+                const tax = subtotal * 0.05;
+                cartTotal = subtotal + shipping + tax;
+                
+                document.getElementById('subtotal').textContent = `BDT ${subtotal.toFixed(2)}`;
+                document.getElementById('tax').textContent = `BDT ${tax.toFixed(2)}`;
+                document.getElementById('total').textContent = `BDT ${cartTotal.toFixed(2)}`;
+            } catch (error) {
+                console.error('Error loading cart:', error);
+            }
+        }
+        
+        document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+            const city = document.getElementById('city').value;
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            
+            const shippingAddress = `${address}, ${city}`;
+            
+            try {
+                // Get current user
+                const userResponse = await fetch('/api/auth/me');
+                const userData = await userResponse.json();
+                
+                if (!userData.success) {
+                    alert('Please login to place order');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const userId = userData.data.userId;
+                
+                // Get cart items
+                const cartResponse = await fetch('/api/cart');
+                const cartData = await cartResponse.json();
+                const cartItems = cartData.data || [];
+                
+                if (cartItems.length === 0) {
+                    alert('Your cart is empty!');
+                    window.location.href = '/products';
+                    return;
+                }
+                
+                // Create order
+                const orderResponse = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        buyerId: userId,
+                        productIds: cartItems.map(item => item.productId)
+                    })
+                });
+                
+                if (!orderResponse.ok) throw new Error('Order creation failed');
+                
+                const orderData = await orderResponse.json();
+                const orderId = orderData.data.id;
+                
+                // Create payment
+                const paymentResponse = await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        paymentMethod: paymentMethod,
+                        amount: cartTotal
+                    })
+                });
+                
+                if (!paymentResponse.ok) throw new Error('Payment failed');
+                
+                const paymentData = await paymentResponse.json();
+                const paymentId = paymentData.data.id;
+                
+                // Process payment
+                await fetch(`/api/payments/${paymentId}/process`, { method: 'POST' });
+                
+                // Clear cart
+                await fetch('/api/cart/clear', { method: 'DELETE' });
+                
+                alert('Order placed successfully!');
+                window.location.href = '/order-history';
+                
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Failed to place order. Please try again.');
+            }
+        });
+        
+        window.addEventListener('DOMContentLoaded', loadCartSummary);
+    </script>
+</body>
+</html>
