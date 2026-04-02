@@ -53,6 +53,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
 
     /**
+     * Find products by price between
+     */
+    List<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
+
+    /**
      * Find products with stock greater than specified quantity
      */
     @Query("SELECT p FROM Product p WHERE p.stockQuantity > :quantity AND p.available = true")

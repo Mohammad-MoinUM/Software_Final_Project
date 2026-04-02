@@ -205,6 +205,192 @@ This document describes the database entities and their relationships in the Min
 - `findOrdersBetweenDates(LocalDateTime, LocalDateTime)`: Date range query
 - `countByStatus(OrderStatus)`: Count orders by status
 
+### ReviewRepository
+- `findByProduct(Product)`: Find reviews for a product
+- `findByUser(User)`: Find reviews by user
+- `findVerifiedPurchaseReviews(Product)`: Get verified purchase reviews
+- `findByProductAndUser(Product, User)`: Check if user reviewed product
+- `getAverageRating(Product)`: Calculate average rating
+
+### WishlistRepository
+- `findByUser(User)`: Find wishlist by user
+- `existsByUserAndProduct(User, Product)`: Check if product in wishlist
+
+### CartItemRepository
+- `findByUser(User)`: Find cart items for user
+- `findByUserAndProduct(User, Product)`: Find specific cart item
+- `deleteByUser(User)`: Clear user's cart
+- `countByUser(User)`: Get cart item count
+
+### PaymentRepository
+- `findByOrder(Order)`: Find payment for order
+- `findByTransactionId(String)`: Find payment by transaction ID
+- `findByStatus(PaymentStatus)`: Filter by payment status
+- `findByPaymentMethod(PaymentMethod)`: Filter by payment method
+
+---
+
+## New Entities (Added in v2)
+
+### 6. Review
+**Table**: `reviews`  
+**Description**: Product reviews and ratings by customers
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Long | Primary Key | Review ID |
+| rating | Integer | NOT NULL, 1-5 | Star rating |
+| comment | String(2000) | - | Review text |
+| verifiedPurchase | Boolean | default=false | Verified buyer flag |
+| createdAt | LocalDateTime | NOT NULL | Creation timestamp |
+| updatedAt | LocalDateTime | NOT NULL | Update timestamp |
+
+**Relationships**:
+- ManyToOne with `Product` (field: `product`)
+- ManyToOne with `User` (field: `user`)
+
+**Validation**:
+- Rating: must be between 1 and 5
+- Comment: max 2000 characters
+
+---
+
+### 7. Wishlist
+**Table**: `wishlists`  
+**Description**: User wishlists for saving favorite products
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Long | Primary Key | Wishlist ID |
+| createdAt | LocalDateTime | NOT NULL | Creation timestamp |
+| updatedAt | LocalDateTime | NOT NULL | Update timestamp |
+
+**Relationships**:
+- OneToOne with `User` (field: `user`)
+- ManyToMany with `Product` (join table: `wishlist_products`)
+
+---
+
+### 8. CartItem
+**Table**: `cart_items`  
+**Description**: Shopping cart items for users
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Long | Primary Key | Cart item ID |
+| quantity | Integer | NOT NULL, >0 | Product quantity |
+| createdAt | LocalDateTime | NOT NULL | Creation timestamp |
+| updatedAt | LocalDateTime | NOT NULL | Update timestamp |
+
+**Relationships**:
+- ManyToOne with `User` (field: `user`)
+- ManyToOne with `Product` (field: `product`)
+
+**Validation**:
+- Quantity: must be greater than 0
+
+---
+
+### 9. Payment
+**Table**: `payments`  
+**Description**: Payment transactions for orders
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Long | Primary Key | Payment ID |
+| amount | BigDecimal(10,2) | NOT NULL, >0 | Payment amount |
+| paymentMethod | PaymentMethod | NOT NULL | Payment method used |
+| status | PaymentStatus | NOT NULL, default=PENDING | Payment status |
+| transactionId | String(100) | UNIQUE | Transaction reference |
+| paymentDate | LocalDateTime | - | Payment completion time |
+| createdAt | LocalDateTime | NOT NULL | Creation timestamp |
+| updatedAt | LocalDateTime | NOT NULL | Update timestamp |
+
+**Enum Values (PaymentMethod)**: `CARD`, `BKASH`, `NAGAD`, `ROCKET`, `CASH_ON_DELIVERY`
+
+**Enum Values (PaymentStatus)**: `PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`, `REFUNDED`
+
+**Relationships**:
+- OneToOne with `Order` (field: `order`)
+
+**Validation**:
+- Amount: must be greater than 0
+
+---
+
+## Updated Relationship Diagram
+
+```
+┌──────────────┐
+│     User     │◄────────────────┐
+├──────────────┤                 │
+│ id           │◄───────┐        │ ManyToMany
+│ username     │        │        │
+│ ...          │        │   ┌────┴─────┐
+└──┬───┬───┬───┘        │   │   Role   │
+   │   │   │            │   └──────────┘
+   │   │   │            │
+   │   │   └─OneToOne──►│
+   │   │                │
+   │   │           ┌────┴─────┐
+   │   │           │ Wishlist │
+   │   │           └──┬───────┘
+   │   │              │ ManyToMany
+   │   │              ▼
+   │   │         ┌────────────┐
+   │   └────────►│  CartItem  │
+   │   OneToMany ├────────────┤
+   │             │ quantity   │
+   │             └──┬─────────┘
+   │                │ ManyToOne
+   │                ▼
+   │         ┌──────────────┐
+   ├────────►│   Product    │◄────────┐
+   │ OneToMany├──────────────┤         │
+   │ (seller) │ name, price  │         │
+   │          └──┬───────────┘         │
+   │             │ OneToMany            │
+   │             ▼                      │
+   │         ┌──────────┐               │
+   │         │  Review  │               │
+   │         ├──────────┤               │
+   │         │ rating   │               │
+   │         │ comment  │               │
+   │         └──────────┘               │
+   │                                    │
+   │ OneToMany                          │
+   │                                    │
+   └────────►┌──────────┐              │
+             │  Order   │              │
+             ├──────────┤              │
+             │ total    │              │
+             │ status   │              │
+             └──┬───────┘              │
+                │ OneToOne              │
+                ▼                       │
+             ┌──────────┐              │
+             │ Payment  │              │
+             ├──────────┤              │
+             │ amount   │              │
+             │ method   │              │
+             └──────────┘              │
+                                       │
+                  ManyToMany           │
+                  (order_products)─────┘
+```
+
+---
+
+## New Join Tables
+
+### wishlist_products
+**Purpose**: Maps wishlists to products (many-to-many)
+
+| Column | Type | References |
+|--------|------|------------|
+| wishlist_id | Long | wishlists.id |
+| product_id | Long | products.id |
+
 ---
 
 ## Notes
@@ -214,3 +400,7 @@ This document describes the database entities and their relationships in the Min
 - Hibernate automatically creates/updates tables based on entity definitions
 - All relationships use proper cascade types and fetch strategies
 - Helper methods in entities maintain bidirectional relationship consistency
+- Payment integration supports multiple local payment methods (bKash, Nagad, Rocket)
+- Review system includes verified purchase flagging
+- Cart items are temporary and cleared after order placement
+- Wishlist provides persistent product saving across sessions

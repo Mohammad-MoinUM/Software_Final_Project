@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Dashboard - Mini Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem 0; text-align: center; }
+        .nav { background: white; padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .nav a { margin: 0 1rem; color: #667eea; text-decoration: none; font-weight: 600; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .card h2 { margin-bottom: 1rem; color: #333; }
+        .stat { font-size: 2rem; font-weight: bold; color: #667eea; }
+        .recent-orders { margin-top: 2rem; }
+        .order-item { background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .status { padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.shipped { background: #cce5ff; color: #004085; }
+        .status.delivered { background: #d4edda; color: #155724; }
+        .btn { padding: 0.75rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #5568d3; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👤 My Dashboard</h1>
+        <div style="text-align: center; margin-top: 0.5rem;">
+            <p id="headerUserInfo" style="font-size: 0.9rem;">Welcome, <strong id="headerUsername">Loading...</strong> | <span id="headerRole">Loading...</span></p>
+        </div>
+    </div>
+    <div class="nav">
+        <a href="/products">Browse Products</a>
+        <a href="/cart">Cart</a>
+        <a href="/wishlist">Wishlist</a>
+        <a href="/order-history">Order History</a>
+        <a href="/logout" onclick="return confirm('Are you sure you want to logout?')">Logout</a>
+    </div>
+    
+    <div class="container">
+        <div class="dashboard-grid">
+            <div class="card">
+                <h2>Profile Information</h2>
+                <p><strong>Name:</strong> <span id="userName">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+                <p><strong>Role:</strong> <span id="userRole">Loading...</span></p>
+                <button class="btn" style="margin-top: 1rem;">Edit Profile</button>
+            </div>
+            
+            <div class="card">
+                <h2>Quick Stats</h2>
+                <p>Total Orders: <span class="stat" id="totalOrders">0</span></p>
+                <p>Wishlist Items: <span class="stat" id="wishlistCount">0</span></p>
+                <p>Cart Items: <span class="stat" id="cartCount">0</span></p>
+            </div>
+            
+            <div class="card">
+                <h2>Quick Actions</h2>
+                <a href="/products" class="btn" style="display: block; text-align: center; margin-bottom: 1rem;">Shop Now</a>
+                <a href="/wishlist" class="btn" style="display: block; text-align: center; margin-bottom: 1rem;">View Wishlist</a>
+                <a href="/order-history" class="btn" style="display: block; text-align: center;">Order History</a>
+            </div>
+        </div>
+        
+        <div class="recent-orders">
+            <h2>Recent Orders</h2>
+            <div id="ordersList"></div>
+        </div>
+    </div>
+    
+    <script>
+        async function loadDashboard() {
+            try {
+                // Load user info
+                const userResponse = await fetch('/api/auth/me');
+                const userData = await userResponse.json();
+                
+                if (!userData.success) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const user = userData.data;
+                
+                // Update header
+                document.getElementById('headerUsername').textContent = user.username;
+                document.getElementById('headerRole').textContent = user.roles.join(', ');
+                
+                // Update profile card
+                document.getElementById('userName').textContent = user.username;
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userRole').textContent = user.roles.join(', ');
+                
+                // Load orders
+                const ordersResponse = await fetch('/api/orders/my-orders');
+                const ordersData = await ordersResponse.json();
+                const orders = ordersData.data || [];
+                
+                document.getElementById('totalOrders').textContent = orders.length;
+                
+                // Load wishlist count
+                const wishlistResponse = await fetch('/api/wishlist');
+                const wishlistData = await wishlistResponse.json();
+                const wishlist = wishlistData.data || { products: [] };
+                document.getElementById('wishlistCount').textContent = wishlist.products.length;
+                
+                // Load cart count
+                const cartResponse = await fetch('/api/cart');
+                const cartData = await cartResponse.json();
+                const cartItems = cartData.data || [];
+                document.getElementById('cartCount').textContent = cartItems.length;
+                
+                // Display recent orders
+                const ordersList = document.getElementById('ordersList');
+                if (orders.length === 0) {
+                    ordersList.innerHTML = '<p>No orders yet. <a href="/products">Start shopping!</a></p>';
+                } else {
+                    ordersList.innerHTML = orders.slice(0, 5).map(order => `
+                        <div class="order-item">
+                            <div>
+                                <strong>Order #${order.id}</strong>
+                                <p>${new Date(order.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                                <span class="status ${order.status.toLowerCase()}">${order.status}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
