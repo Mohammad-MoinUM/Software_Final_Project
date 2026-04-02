@@ -1,0 +1,21 @@
+# Docker ignore file
+target/
+!target/*.jar
+*.log
+.git
+.gitignore
+README.md
+.env
+.idea/
+.vscode/
+*.iml
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+.DS_Store
+Thumbs.db

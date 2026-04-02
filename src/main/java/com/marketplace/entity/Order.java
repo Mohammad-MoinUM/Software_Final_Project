@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -19,7 +20,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Order extends BaseEntity {
 
     @NotNull
@@ -30,7 +31,7 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "buyer_id", nullable = false)
     private User buyer;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "order_products",
         joinColumns = @JoinColumn(name = "order_id", referencedColumnName = "id"),
