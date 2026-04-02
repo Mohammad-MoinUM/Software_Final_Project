@@ -6,6 +6,7 @@ import com.marketplace.entity.Product;
 import com.marketplace.entity.Role;
 import com.marketplace.entity.RoleType;
 import com.marketplace.entity.User;
+import com.marketplace.repository.OrderRepository;
 import com.marketplace.repository.ProductRepository;
 import com.marketplace.repository.RoleRepository;
 import com.marketplace.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +45,12 @@ class ProductControllerIntegrationTest {
     @Autowired
     private ProductRepository productRepository;
 
+        @Autowired
+        private OrderRepository orderRepository;
+
+        @Autowired
+        private JdbcTemplate jdbcTemplate;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -56,9 +64,11 @@ class ProductControllerIntegrationTest {
     private Product testProduct;
 
     @BeforeEach
-    @Transactional
+    @Transactional // Ensure each test runs in a transaction that rolls back after completion
     void setUp() {
         // Clear database
+        jdbcTemplate.update("DELETE FROM order_products");
+        orderRepository.deleteAll();
         productRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -93,7 +103,7 @@ class ProductControllerIntegrationTest {
         productRepository.save(testProduct);
     }
 
-    @Test
+    @Test // Test that all products can be retrieved successfully
     void testGetAllProducts_Success() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products"))
@@ -102,7 +112,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray());
     }
 
-    @Test
+    @Test // Test that a product can be retrieved by ID successfully
     void testGetProductById_Success() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products/" + testProduct.getId()))
@@ -112,7 +122,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.price").value(99.99));
     }
 
-    @Test
+    @Test // Test that products can be retrieved by category successfully
     void testGetProductsByCategory_Success() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products/category/Electronics"))
@@ -130,8 +140,8 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
-    @WithMockUser(roles = "SELLER")
+    @Test // Test that a seller can create a product successfully
+        @WithMockUser(username = "seller", roles = "SELLER")
     void testCreateProduct_AsSeller_Success() throws Exception {
         // Arrange
         ProductCreateDTO createDTO = ProductCreateDTO.builder()
@@ -152,7 +162,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.name").value("New Product"));
     }
 
-    @Test
+    @Test // Test that a buyer cannot create a product (forbidden)
     @WithMockUser(roles = "BUYER")
     void testCreateProduct_AsBuyer_Forbidden() throws Exception {
         // Arrange
@@ -170,7 +180,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
+    @Test // Test that all available products can be retrieved successfully
     void testGetAllAvailableProducts_Success() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products/available"))
@@ -179,7 +189,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray());
     }
 
-    @Test
+    @Test // Test that products can be retrieved by seller successfully
     void testGetProductsBySeller_Success() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products/seller/" + testSeller.getId()))
@@ -188,7 +198,7 @@ class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray());
     }
 
-    @Test
+    @Test // Test that products can be retrieved by price range successfully
     void testGetProductsByPriceRange_Success() throws Exception {
         // Act & Assert
         mockMvc.perform(get("/api/products/price-range")

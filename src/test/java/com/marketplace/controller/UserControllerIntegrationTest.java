@@ -5,6 +5,7 @@ import com.marketplace.dto.UserRegistrationDTO;
 import com.marketplace.entity.Role;
 import com.marketplace.entity.RoleType;
 import com.marketplace.entity.User;
+import com.marketplace.repository.OrderRepository;
 import com.marketplace.repository.ProductRepository;
 import com.marketplace.repository.RoleRepository;
 import com.marketplace.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,6 +46,12 @@ class UserControllerIntegrationTest {
         @Autowired
         private ProductRepository productRepository;
 
+        @Autowired
+        private OrderRepository orderRepository;
+
+        @Autowired
+        private JdbcTemplate jdbcTemplate;
+
     @Autowired
     private RoleRepository roleRepository;
 
@@ -57,6 +65,8 @@ class UserControllerIntegrationTest {
     @Transactional
     void setUp() {
         // Clear database
+                jdbcTemplate.update("DELETE FROM order_products");
+                orderRepository.deleteAll();
                 productRepository.deleteAll();
                 userRepository.deleteAll();
 
@@ -86,7 +96,7 @@ class UserControllerIntegrationTest {
         userRepository.save(testUser);
     }
 
-    @Test
+    @Test // Test that a new user can be registered successfully
     void testRegisterUser_Success() throws Exception {
         // Arrange
         UserRegistrationDTO registrationDTO = UserRegistrationDTO.builder()
@@ -107,7 +117,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.email").value("newuser@example.com"));
     }
 
-    @Test
+    @Test // Test that user registration fails with invalid data        
     void testRegisterUser_InvalidData_ReturnsBadRequest() throws Exception {
         // Arrange - Missing required fields
         UserRegistrationDTO registrationDTO = UserRegistrationDTO.builder()
@@ -125,7 +135,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.error").value("Validation Failed"));
     }
 
-    @Test
+    @Test // Test that an admin can retrieve all users successfully
     @WithMockUser(roles = "ADMIN")
     void testGetAllUsers_AsAdmin_Success() throws Exception {
         // Act & Assert
@@ -135,7 +145,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray());
     }
 
-    @Test
+    @Test // Test that a non-admin cannot retrieve all users (forbidden)
     @WithMockUser(roles = "BUYER")
     void testGetAllUsers_AsNonAdmin_Forbidden() throws Exception {
         // Act & Assert
@@ -143,7 +153,7 @@ class UserControllerIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
+    @Test // Test that a user can retrieve their own details successfully
     @WithMockUser(username = "testuser", roles = "BUYER")
     void testGetUserById_AsOwner_Success() throws Exception {
         // Act & Assert
@@ -153,7 +163,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.username").value("testuser"));
     }
 
-    @Test
+    @Test // Test that a user cannot retrieve another user's details (forbidden)
     @WithMockUser(roles = "BUYER")
     void testGetUserByUsername_Success() throws Exception {
         // Act & Assert
@@ -163,7 +173,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.email").value("test@example.com"));
     }
 
-    @Test
+    @Test // Test that a user can update their own details successfully
     @WithMockUser(roles = "ADMIN")
     void testDeleteUser_AsAdmin_Success() throws Exception {
         // Act & Assert
@@ -172,7 +182,7 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
+    @Test // Test that a non-admin cannot delete a user (forbidden)
     @WithMockUser(roles = "BUYER")
     void testDeleteUser_AsNonAdmin_Forbidden() throws Exception {
         // Act & Assert

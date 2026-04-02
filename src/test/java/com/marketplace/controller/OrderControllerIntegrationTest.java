@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class OrderControllerIntegrationTest {
 
-    @Autowired
+    @Autowired // Inject MockMvc for performing HTTP requests in tests
     private MockMvc mockMvc;
 
     @Autowired
@@ -58,7 +58,7 @@ class OrderControllerIntegrationTest {
     private Product testProduct;
     private Order testOrder;
 
-    @BeforeEach
+    @BeforeEach // Set up test data before each test
     void setUp() {
         // Clear database
         orderRepository.deleteAll();
@@ -121,7 +121,7 @@ class OrderControllerIntegrationTest {
         orderRepository.save(testOrder);
     }
 
-    @Test
+    @Test // Test that an admin can retrieve all orders successfully
     @WithMockUser(roles = "ADMIN")
     void testGetAllOrders_AsAdmin_Success() throws Exception {
         // Act & Assert
@@ -139,7 +139,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    @Test
+    @Test // Test that a buyer can retrieve their own order successfully
     @WithMockUser(username = "buyer", roles = "BUYER")
     void testGetOrderById_AsOwner_Success() throws Exception {
         // Act & Assert
@@ -149,7 +149,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.orderNumber").value("ORD-TEST-001"));
     }
 
-    @Test
+    @Test // Test that a buyer can retrieve their own orders successfully       
     @WithMockUser(username = "buyer", roles = "BUYER")
     void testGetOrdersByBuyer_AsOwner_Success() throws Exception {
         // Act & Assert
@@ -159,7 +159,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray());
     }
 
-    @Test
+    @Test // Test that an authenticated buyer can create an order successfully
     @WithMockUser(username = "buyer", roles = "BUYER")
     void testCreateOrder_AsAuthenticatedUser_Success() throws Exception {
         // Arrange
@@ -192,7 +192,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    @Test
+    @Test // Test that an admin can retrieve orders by status successfully
     @WithMockUser(roles = "ADMIN")
     void testGetOrdersByStatus_AsAdmin_Success() throws Exception {
         // Act & Assert
@@ -201,7 +201,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
+    @Test // Test that a buyer can cancel their own order successfully
     @WithMockUser(username = "buyer", roles = "BUYER")
     void testCancelOrder_AsOwner_Success() throws Exception {
         // Act & Assert
@@ -210,7 +210,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
+    @Test // Test that an admin can delete an order successfully
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrder_AsAdmin_Success() throws Exception {
         // Act & Assert
@@ -219,7 +219,7 @@ class OrderControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
+    @Test // Test that a seller can retrieve their own orders successfully      
     @WithMockUser(username = "seller", roles = "SELLER")
     void testGetOrdersBySeller_Success() throws Exception {
         // Act & Assert
