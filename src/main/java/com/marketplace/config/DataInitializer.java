@@ -4,35 +4,40 @@ import com.marketplace.entity.Product;
 import com.marketplace.entity.Role;
 import com.marketplace.entity.RoleType;
 import com.marketplace.entity.User;
+
 import com.marketplace.repository.ProductRepository;
 import com.marketplace.repository.RoleRepository;
 import com.marketplace.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.HashSet;
+import lombok.RequiredArgsConstructor;  // For constructor injection of dependencies
+import lombok.extern.slf4j.Slf4j;// For logging
+import org.springframework.boot.CommandLineRunner;// To run code at application startup
+import org.springframework.security.crypto.password.PasswordEncoder; // For encoding passwords before saving to the database
+import org.springframework.stereotype.Component; // Marks this class as a Spring component, allowing it to be detected and registered as a bean during component scanning
+import org.springframework.transaction.annotation.Transactional; // To ensure that the database operations are executed within a transaction, providing atomicity and rollback capabilities in case of errors
+
+import java.math.BigDecimal; // For representing product prices with high precision
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays; // For creating lists of roles and products to save to the database
+import java.util.HashSet; // For initializing sets of roles and products for users and sellers, ensuring no duplicates and efficient lookups
+import java.util.List;
 
 /**
  * Initialize database with default roles and admin user
  */
-@Component
-@RequiredArgsConstructor
-@Slf4j
-public class DataInitializer implements CommandLineRunner {
+@Component // Marks this class as a Spring component, allowing it to be detected and registered as a bean during component scanning
+@RequiredArgsConstructor // Lombok annotation to generate a constructor with required arguments (final fields), enabling constructor injection of dependencies
+@Slf4j // Lombok annotation to generate a logger instance for this class, allowing for logging messages at various levels (info, debug, error, etc.)
+public class DataInitializer implements CommandLineRunner { // Implements CommandLineRunner to run code at application startup
 
-    private final RoleRepository roleRepository;
+    private final RoleRepository roleRepository; //
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;// For encoding passwords before saving to the database
 
     @Override
-    @Transactional
+    @Transactional // To ensure that the database operations are executed within a transaction, providing atomicity and rollback capabilities in case of errors
     public void run(String... args) {
         log.info("Starting database initialization...");
         
@@ -90,11 +95,11 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        // Get admin role
+        // Get admin role 
         Role adminRole = roleRepository.findByName(RoleType.ADMIN)
                 .orElseThrow(() -> new RuntimeException("Admin role not found"));
 
-        // Create admin user
+        // Create admin user 
         User admin = User.builder()
                 .username("admin")
                 .email("admin@marketplace.com")
@@ -120,7 +125,8 @@ public class DataInitializer implements CommandLineRunner {
         
         // Check if products already exist
         if (productRepository.count() > 0) {
-            log.info("Products already exist, skipping sample data creation...");
+                        log.info("Products already exist, updating product image URLs...");
+                        updateMissingProductImageUrls();
             return;
         }
 
@@ -162,6 +168,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("15.6 inch FHD display, Intel Core i5, 8GB RAM, 512GB SSD")
                 .price(new BigDecimal("55000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(25)
                 .available(true)
                 .seller(seller1)
@@ -173,6 +180,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("6.4 inch AMOLED, 128GB storage, 50MP camera, 5000mAh battery")
                 .price(new BigDecimal("38000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(50)
                 .available(true)
                 .seller(seller1)
@@ -184,6 +192,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Wireless noise cancelling headphones, 30hr battery life")
                 .price(new BigDecimal("28000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(15)
                 .available(true)
                 .seller(seller1)
@@ -195,6 +204,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("GPS, fitness tracking, heart rate monitor, water resistant")
                 .price(new BigDecimal("42000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(20)
                 .available(true)
                 .seller(seller1)
@@ -207,6 +217,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("100% cotton, comfortable fit, available in multiple colors")
                 .price(new BigDecimal("1200.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(100)
                 .available(true)
                 .seller(seller2)
@@ -218,6 +229,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Stylish slim fit denim jeans, premium quality")
                 .price(new BigDecimal("2500.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(75)
                 .available(true)
                 .seller(seller2)
@@ -229,6 +241,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Comfortable running shoes with air cushioning")
                 .price(new BigDecimal("8500.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(40)
                 .available(true)
                 .seller(seller2)
@@ -240,6 +253,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Genuine leather jacket, water resistant, warm")
                 .price(new BigDecimal("12000.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(30)
                 .available(true)
                 .seller(seller2)
@@ -252,6 +266,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("11-inch Liquid Retina display, M2 chip, 256GB storage")
                 .price(new BigDecimal("82000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(12)
                 .available(true)
                 .seller(seller1)
@@ -263,6 +278,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Full-frame mirrorless camera, 20MP, 4K video, body only")
                 .price(new BigDecimal("220000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(5)
                 .available(true)
                 .seller(seller1)
@@ -274,6 +290,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("RGB backlit, Cherry MX switches, programmable keys")
                 .price(new BigDecimal("7500.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(35)
                 .available(true)
                 .seller(seller1)
@@ -285,6 +302,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Wireless mouse, ergonomic design, 8K DPI sensor")
                 .price(new BigDecimal("9500.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(28)
                 .available(true)
                 .seller(seller1)
@@ -296,6 +314,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("IPS display, 4K UHD resolution, HDR10, USB-C")
                 .price(new BigDecimal("32000.00"))
                 .category("Electronics")
+                .imageUrl(null)
                 .stockQuantity(18)
                 .available(true)
                 .seller(seller1)
@@ -308,6 +327,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Light cotton fabric, beautiful floral pattern, casual wear")
                 .price(new BigDecimal("2800.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(55)
                 .available(true)
                 .seller(seller2)
@@ -319,6 +339,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Soft fleece interior, kangaroo pocket, pullover style")
                 .price(new BigDecimal("3200.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(65)
                 .available(true)
                 .seller(seller2)
@@ -330,6 +351,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Water-resistant, laptop compartment, ergonomic straps")
                 .price(new BigDecimal("4500.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(42)
                 .available(true)
                 .seller(seller2)
@@ -341,6 +363,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("UV400 protection, metal frame, classic aviator style")
                 .price(new BigDecimal("1800.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(88)
                 .available(true)
                 .seller(seller2)
@@ -352,6 +375,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Stainless steel, water resistant, leather strap")
                 .price(new BigDecimal("6500.00"))
                 .category("Fashion")
+                .imageUrl(null)
                 .stockQuantity(25)
                 .available(true)
                 .seller(seller2)
@@ -364,6 +388,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("15-bar pump, milk frother, programmable settings")
                 .price(new BigDecimal("18000.00"))
                 .category("Home & Garden")
+                .imageUrl(null)
                 .stockQuantity(15)
                 .available(true)
                 .seller(seller1)
@@ -375,6 +400,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("1000W motor, 1.5L capacity, stainless steel blades")
                 .price(new BigDecimal("5500.00"))
                 .category("Home & Garden")
+                .imageUrl(null)
                 .stockQuantity(32)
                 .available(true)
                 .seller(seller1)
@@ -386,6 +412,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Bagless, HEPA filter, 40min runtime, LED display")
                 .price(new BigDecimal("22000.00"))
                 .category("Home & Garden")
+                .imageUrl(null)
                 .stockQuantity(11)
                 .available(true)
                 .seller(seller1)
@@ -397,6 +424,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("King size, 400 thread count, 4-piece set, wrinkle-free")
                 .price(new BigDecimal("4800.00"))
                 .category("Home & Garden")
+                .imageUrl(null)
                 .stockQuantity(45)
                 .available(true)
                 .seller(seller2)
@@ -409,6 +437,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Personal finance book by Morgan Housel, bestseller")
                 .price(new BigDecimal("550.00"))
                 .category("Books")
+                .imageUrl(null)
                 .stockQuantity(120)
                 .available(true)
                 .seller(seller2)
@@ -420,6 +449,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Self-improvement book by James Clear, proven strategies")
                 .price(new BigDecimal("600.00"))
                 .category("Books")
+                .imageUrl(null)
                 .stockQuantity(95)
                 .available(true)
                 .seller(seller2)
@@ -431,6 +461,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Wisdom book by Jay Shetty, life lessons and mindfulness")
                 .price(new BigDecimal("480.00"))
                 .category("Books")
+                .imageUrl(null)
                 .stockQuantity(78)
                 .available(true)
                 .seller(seller2)
@@ -443,6 +474,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Non-slip, eco-friendly TPE material, 6mm thick, carry strap")
                 .price(new BigDecimal("2200.00"))
                 .category("Sports")
+                .imageUrl(null)
                 .stockQuantity(60)
                 .available(true)
                 .seller(seller2)
@@ -454,6 +486,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("20kg pair, quick-lock design, compact storage")
                 .price(new BigDecimal("8500.00"))
                 .category("Sports")
+                .imageUrl(null)
                 .stockQuantity(22)
                 .available(true)
                 .seller(seller1)
@@ -465,6 +498,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("21-speed, disc brakes, alloy frame, suspension fork")
                 .price(new BigDecimal("25000.00"))
                 .category("Sports")
+                .imageUrl(null)
                 .stockQuantity(8)
                 .available(true)
                 .seller(seller1)
@@ -477,6 +511,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("100ml, long-lasting fragrance, elegant bottle")
                 .price(new BigDecimal("3500.00"))
                 .category("Beauty")
+                .imageUrl(null)
                 .stockQuantity(48)
                 .available(true)
                 .seller(seller2)
@@ -488,6 +523,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("Anti-aging, brightening, hyaluronic acid, 30ml")
                 .price(new BigDecimal("2100.00"))
                 .category("Beauty")
+                .imageUrl(null)
                 .stockQuantity(72)
                 .available(true)
                 .seller(seller2)
@@ -499,6 +535,7 @@ public class DataInitializer implements CommandLineRunner {
                 .description("2000W, 3 heat settings, cool shot button, concentrator nozzle")
                 .price(new BigDecimal("4200.00"))
                 .category("Beauty")
+                .imageUrl(null)
                 .stockQuantity(28)
                 .available(true)
                 .seller(seller1)
@@ -517,7 +554,42 @@ public class DataInitializer implements CommandLineRunner {
             perfume, skincare, hairDryer
         ));
 
-        log.info("Sample data created: 2 sellers and 33 products across multiple categories");
+        // Replace temporary seed images with product-relevant URLs.
+        updateMissingProductImageUrls();
+
+        log.info("Sample data created: 2 sellers and 31 products across multiple categories");
         log.info("Seller accounts: techseller / fashionseller (password: seller123)");
+    }
+
+    private void updateMissingProductImageUrls() {
+        List<Product> products = productRepository.findAll();
+        int updatedCount = 0;
+
+        for (Product product : products) {
+            String currentImageUrl = product.getImageUrl();
+            boolean shouldUpdate = currentImageUrl == null
+                    || currentImageUrl.isBlank()
+                    || currentImageUrl.contains("picsum.photos");
+
+            if (shouldUpdate) {
+                product.setImageUrl(buildRelevantImageUrl(product.getName(), product.getCategory()));
+                updatedCount++;
+            }
+        }
+
+        if (updatedCount > 0) {
+            productRepository.saveAll(products);
+            log.info("Updated relevant image URLs for {} products", updatedCount);
+        } else {
+            log.info("All products already have non-placeholder image URLs");
+        }
+    }
+
+    private String buildRelevantImageUrl(String productName, String category) {
+        String safeName = (productName == null || productName.isBlank()) ? "product" : productName;
+        String safeCategory = (category == null || category.isBlank()) ? "shopping" : category;
+        String query = safeName + " " + safeCategory + " product";
+        return "https://source.unsplash.com/1200x900/?"
+                + URLEncoder.encode(query, StandardCharsets.UTF_8);
     }
 }

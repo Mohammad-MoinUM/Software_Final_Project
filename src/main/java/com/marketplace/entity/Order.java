@@ -31,7 +31,7 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "buyer_id", nullable = false)
     private User buyer;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "order_products",
         joinColumns = @JoinColumn(name = "order_id", referencedColumnName = "id"),

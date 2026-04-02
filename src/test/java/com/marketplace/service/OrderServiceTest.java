@@ -75,7 +75,7 @@ class OrderServiceTest {
                 .build();
     }
 
-    @Test
+    @Test // Test that an order can be created successfully
     void testFindById_Success() {
         // Arrange
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
@@ -88,7 +88,7 @@ class OrderServiceTest {
         assertEquals("ORD-001", result.get().getOrderNumber());
     }
 
-    @Test
+    @Test // Test that all orders can be retrieved successfully
     void testFindAll_Success() {
         // Arrange
         List<Order> orders = Arrays.asList(testOrder);
@@ -101,7 +101,7 @@ class OrderServiceTest {
         assertEquals(1, result.size());
     }
 
-    @Test
+    @Test // Test that orders can be retrieved by buyer ID successfully
     void testFindByBuyerId_Success() {
         // Arrange
         List<Order> orders = Arrays.asList(testOrder);
@@ -115,7 +115,7 @@ class OrderServiceTest {
         assertEquals("buyer", result.get(0).getBuyer().getUsername());
     }
 
-    @Test
+    @Test // Test that orders can be retrieved by status successfully
     void testFindByStatus_Success() {
         // Arrange
         List<Order> orders = Arrays.asList(testOrder);
@@ -129,7 +129,7 @@ class OrderServiceTest {
         assertEquals(OrderStatus.PENDING, result.get(0).getStatus());
     }
 
-    @Test
+    @Test // Test that an order can be created successfully
     void testCreateOrder_Success() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testBuyer));
@@ -145,7 +145,7 @@ class OrderServiceTest {
         verify(productService, times(1)).decreaseStock(1L, 1);
     }
 
-    @Test
+    @Test // Test that order creation fails when buyer is not found
     void testCreateOrder_BuyerNotFound_ThrowsException() {
         // Arrange
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
@@ -156,7 +156,7 @@ class OrderServiceTest {
         });
     }
 
-    @Test
+    @Test // Test that order creation fails when product is not found
     void testCreateOrder_ProductNotAvailable_ThrowsException() {
         // Arrange
         testProduct.setAvailable(false);
@@ -169,7 +169,7 @@ class OrderServiceTest {
         });
     }
 
-    @Test
+    @Test // Test that order creation fails when product is out of stock
     void testUpdateOrderStatus_Success() {
         // Arrange
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
@@ -183,7 +183,7 @@ class OrderServiceTest {
         verify(orderRepository, times(1)).save(any(Order.class));
     }
 
-    @Test
+    @Test // Test that order status update fails when order is not found
     void testCancelOrder_Success() {
         // Arrange
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
@@ -199,7 +199,7 @@ class OrderServiceTest {
         verify(orderRepository, times(1)).save(any(Order.class));
     }
 
-    @Test
+    @Test // Test that order cancellation fails when order is already delivered
     void testCancelOrder_AlreadyDelivered_ThrowsException() {
         // Arrange
         testOrder.setStatus(OrderStatus.DELIVERED);
@@ -211,7 +211,7 @@ class OrderServiceTest {
         });
     }
 
-    @Test
+    @Test // Test that an order can be deleted successfully
     void testDeleteOrder_Success() {
         // Arrange
         when(orderRepository.existsById(1L)).thenReturn(true);

@@ -336,7 +336,7 @@
             
             container.innerHTML = products.map(product => `
                 <div class="product-card" onclick="viewProduct(${product.id})">
-                    <img src="${product.imageUrl || '/images/placeholder.jpg'}" 
+                    <img src="${product.imageUrl || '/images/placeholder.svg'}" 
                          alt="${product.name}" class="product-image">
                     <div class="product-info">
                         <div class="product-name">${product.name}</div>
