@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - Mini Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 1.5rem 0;
+        }
+        .header-content { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { color: white; text-decoration: none; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; }
+        .product-detail { background: white; border-radius: 12px; padding: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+        .product-image-section { position: relative; }
+        .main-image { width: 100%; height: 400px; object-fit: cover; border-radius: 12px; background: #f0f0f0; }
+        .product-info-section h1 { font-size: 2rem; margin-bottom: 1rem; color: #333; }
+        .rating-section { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .stars { color: #ffc107; font-size: 1.2rem; }
+        .price { font-size: 2.5rem; font-weight: bold; color: #667eea; margin-bottom: 1rem; }
+        .description { color: #666; line-height: 1.6; margin-bottom: 2rem; }
+        .quantity-selector { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .quantity-selector button { width: 40px; height: 40px; border: 2px solid #667eea; background: white; color: #667eea; border-radius: 8px; cursor: pointer; font-size: 1.2rem; }
+        .quantity-selector input { width: 60px; text-align: center; padding: 0.5rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+        .action-buttons { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .btn { padding: 1rem 2rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; flex: 1; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .seller-info { background: #f8f9ff; padding: 1.5rem; border-radius: 8px; }
+        .reviews-section { margin-top: 3rem; }
+        .review-card { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; }
+        .review-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+        .review-form { background: white; padding: 2rem; border-radius: 8px; margin-top: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-group textarea { width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical; }
+        .rating-input { display: flex; gap: 0.5rem; }
+        .rating-input input { display: none; }
+        .rating-input label { font-size: 2rem; color: #ddd; cursor: pointer; }
+        .rating-input input:checked ~ label { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🛒 Mini Marketplace</div>
+            <div class="nav-links">
+                <a href="/products">Products</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/cart">🛒 Cart</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="product-detail" id="productDetail">
+            <!-- Product details will be loaded here -->
+        </div>
+        
+        <div class="reviews-section">
+            <h2>Customer Reviews</h2>
+            <div id="reviewsList"></div>
+            
+            <div class="review-form">
+                <h3>Write a Review</h3>
+                <form id="reviewForm">
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <div class="rating-input" id="ratingInput">
+                            <input type="radio" name="rating" value="5" id="star5">
+                            <label for="star5">★</label>
+                            <input type="radio" name="rating" value="4" id="star4">
+                            <label for="star4">★</label>
+                            <input type="radio" name="rating" value="3" id="star3">
+                            <label for="star3">★</label>
+                            <input type="radio" name="rating" value="2" id="star2">
+                            <label for="star2">★</label>
+                            <input type="radio" name="rating" value="1" id="star1">
+                            <label for="star1">★</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Review</label>
+                        <textarea id="reviewComment" rows="4" placeholder="Share your experience..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const productId = window.location.pathname.split('/').pop();
+        let quantity = 1;
+        
+        async function loadProduct() {
+            try {
+                const response = await fetch(`/api/products/${productId}`);
+                const data = await response.json();
+                const product = data.data;
+                
+                document.getElementById('productDetail').innerHTML = `
+                    <div class="product-image-section">
+                        <img src="${product.imageUrl || '/images/placeholder.jpg'}" class="main-image" alt="${product.name}">
+                    </div>
+                    <div class="product-info-section">
+                        <h1>${product.name}</h1>
+                        <div class="rating-section">
+                            <span class="stars">★★★★☆</span>
+                            <span>(4.5) 127 reviews</span>
+                        </div>
+                        <div class="price">BDT ${product.price}</div>
+                        <p class="description">${product.description || 'No description available'}</p>
+                        
+                        <div class="quantity-selector">
+                            <button onclick="changeQuantity(-1)">-</button>
+                            <input type="number" id="quantity" value="1" min="1" max="${product.stockQuantity}">
+                            <button onclick="changeQuantity(1)">+</button>
+                            <span>Available: ${product.stockQuantity}</span>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="addToCart()">🛒 Add to Cart</button>
+                            <button class="btn btn-secondary" onclick="toggleWishlist()">❤️ Wishlist</button>
+                            <button class="btn btn-secondary" onclick="buyNow()">Buy Now</button>
+                        </div>
+                        
+                        <div class="seller-info">
+                            <strong>Sold by:</strong> ${product.sellerUsername || 'Unknown'}<br>
+                            <strong>Category:</strong> ${product.category || 'Uncategorized'}
+                        </div>
+                    </div>
+                `;
+                
+                loadReviews();
+            } catch (error) {
+                console.error('Error loading product:', error);
+            }
+        }
+        
+        async function loadReviews() {
+            try {
+                const response = await fetch(`/api/reviews/product/${productId}`);
+                const data = await response.json();
+                const reviews = data.data || [];
+                
+                const reviewsList = document.getElementById('reviewsList');
+                if (reviews.length === 0) {
+                    reviewsList.innerHTML = '<p>No reviews yet. Be the first to review!</p>';
+                } else {
+                    reviewsList.innerHTML = reviews.map(review => `
+                        <div class="review-card">
+                            <div class="review-header">
+                                <strong>${review.userFullName || review.username}</strong>
+                                <span class="stars">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+                            </div>
+                            <p>${review.comment}</p>
+                            <small>${new Date(review.createdAt).toLocaleDateString()}</small>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+            }
+        }
+        
+        function changeQuantity(delta) {
+            const input = document.getElementById('quantity');
+            const newValue = parseInt(input.value) + delta;
+            if (newValue >= 1 && newValue <= input.max) {
+                input.value = newValue;
+            }
+        }
+        
+        async function addToCart() {
+            const quantity = document.getElementById('quantity').value;
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: parseInt(productId), quantity: parseInt(quantity) })
+                });
+                if (response.ok) {
+                    alert('Added to cart!');
+                }
+            } catch (error) {
+                alert('Please login to add to cart');
+            }
+        }
+        
+        async function toggleWishlist() {
+            try {
+                await fetch(`/api/wishlist/add/${productId}`, { method: 'POST' });
+                alert('Added to wishlist!');
+            } catch (error) {
+                alert('Please login to add to wishlist');
+            }
+        }
+        
+        function buyNow() {
+            addToCart();
+            setTimeout(() => window.location.href = '/cart', 500);
+        }
+        
+        document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const rating = document.querySelector('input[name="rating"]:checked')?.value;
+            const comment = document.getElementById('reviewComment').value;
+            
+            if (!rating) {
+                alert('Please select a rating');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: parseInt(productId), rating: parseInt(rating), comment })
+                });
+                
+                if (response.ok) {
+                    alert('Review submitted successfully!');
+                    document.getElementById('reviewForm').reset();
+                    loadReviews();
+                }
+            } catch (error) {
+                alert('Please login to submit a review');
+            }
+        });
+        
+        window.addEventListener('DOMContentLoaded', loadProduct);
+    </script>
+</body>
+</html>

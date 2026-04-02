@@ -5,99 +5,234 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title}">Mini Marketplace</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        }
+        
+        .hero {
+            text-align: center;
+            color: white;
+            padding: 4rem 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
         }
         
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .feature-card {
             background: white;
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             text-align: center;
-            max-width: 600px;
-            width: 90%;
+            transition: transform 0.3s;
         }
         
-        h1 {
-            color: #667eea;
-            font-size: 2.5rem;
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
             margin-bottom: 1rem;
         }
         
-        p {
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-card p {
             color: #666;
-            font-size: 1.2rem;
-            line-height: 1.6;
         }
         
-        .badge {
+        .btn {
             display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            margin-top: 1.5rem;
+            padding: 1rem 2rem;
+            margin: 0.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            cursor: pointer;
         }
         
-        .features {
-            margin-top: 2rem;
-            text-align: left;
-        }
-        
-        .features h2 {
-            color: #333;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .features ul {
-            list-style: none;
-        }
-        
-        .features li {
-            padding: 0.5rem 0;
-            color: #555;
-        }
-        
-        .features li:before {
-            content: "✓ ";
+        .btn-primary {
+            background: white;
             color: #667eea;
-            font-weight: bold;
-            margin-right: 0.5rem;
+            border: 2px solid white;
+        }
+        
+        .btn-primary:hover {
+            background: transparent;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .role-login-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 3rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .role-login-section h2 {
+            color: white;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .role-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .role-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .role-card-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .role-card h3 {
+            color: #667eea;
+            margin-bottom: 0.3rem;
+            font-size: 1.3rem;
+        }
+        
+        .role-card p {
+            color: #666;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 th:text="${title}">Mini Marketplace</h1>
-        <p th:text="${message}">Welcome to Mini Marketplace!</p>
-        <span class="badge">Spring Boot Application</span>
+    <div class="hero">
+        <h1>🛒 Mini Marketplace</h1>
+        <p>Your one-stop shop for everything you need</p>
+        <div>
+            <a href="/products" class="btn btn-primary">Browse Products</a>
+            <a href="/register" class="btn btn-secondary">Register</a>
+        </div>
         
-        <div class="features">
-            <h2>Technology Stack</h2>
-            <ul>
-                <li>Java 17</li>
-                <li>Spring Boot 3.2</li>
-                <li>Spring Security</li>
-                <li>Spring Data JPA</li>
-                <li>Thymeleaf</li>
-                <li>PostgreSQL</li>
-                <li>Maven</li>
-                <li>Lombok</li>
-            </ul>
+        <div class="role-login-section">
+            <h2>Login by Role</h2>
+            <div class="role-cards">
+                <a href="/login?role=buyer" class="role-card">
+                    <div class="role-card-icon">🛍️</div>
+                    <h3>Customer</h3>
+                    <p>Shop & browse products</p>
+                </a>
+                
+                <a href="/login?role=seller" class="role-card">
+                    <div class="role-card-icon">🏪</div>
+                    <h3>Seller</h3>
+                    <p>Manage your products</p>
+                </a>
+                
+                <a href="/login?role=admin" class="role-card">
+                    <div class="role-card-icon">⚙️</div>
+                    <h3>Admin</h3>
+                    <p>System management</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🛍️</div>
+                <h3>Wide Selection</h3>
+                <p>Browse thousands of products from trusted sellers</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">💳</div>
+                <h3>Secure Payments</h3>
+                <p>Card, bKash, Nagad & Cash on Delivery available</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🚚</div>
+                <h3>Fast Delivery</h3>
+                <p>Quick and reliable shipping to your doorstep</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <h3>Product Reviews</h3>
+                <p>Read reviews from verified buyers</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">❤️</div>
+                <h3>Wishlist</h3>
+                <p>Save products for later with one click</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👨‍💼</div>
+                <h3>Become a Seller</h3>
+                <p>Start selling your products today</p>
+            </div>
         </div>
     </div>
 </body>

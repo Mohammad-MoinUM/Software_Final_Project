@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wishlist - Mini Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1.5rem 0; text-align: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; }
+        .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+        .wishlist-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .wishlist-card:hover { transform: translateY(-5px); }
+        .product-image { width: 100%; height: 200px; object-fit: cover; }
+        .card-content { padding: 1.5rem; }
+        .product-name { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; color: #333; }
+        .product-price { font-size: 1.5rem; color: #f5576c; font-weight: bold; margin: 1rem 0; }
+        .btn { padding: 0.75rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-bottom: 0.5rem; }
+        .btn-cart { background: #667eea; color: white; }
+        .btn-cart:hover { background: #5568d3; }
+        .btn-remove { background: #dc3545; color: white; }
+        .btn-remove:hover { background: #c82333; }
+        .empty-state { text-align: center; padding: 4rem 2rem; }
+        .empty-state h2 { color: #666; margin-bottom: 1rem; }
+        .back-btn { display: inline-block; padding: 1rem 2rem; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="header"><h1>❤️ My Wishlist</h1></div>
+    
+    <div class="container">
+        <div id="wishlistGrid" class="wishlist-grid"></div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h2>Your wishlist is empty</h2>
+            <p>Add products you love to your wishlist!</p>
+            <a href="/products" class="back-btn">Browse Products</a>
+        </div>
+    </div>
+    
+    <script>
+        async function loadWishlist() {
+            try {
+                const response = await fetch('/api/wishlist');
+                const data = await response.json();
+                const wishlist = data.data || { products: [] };
+                const products = wishlist.products || [];
+                
+                const wishlistGrid = document.getElementById('wishlistGrid');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (products.length === 0) {
+                    wishlistGrid.style.display = 'none';
+                    emptyState.style.display = 'block';
+                } else {
+                    wishlistGrid.style.display = 'grid';
+                    emptyState.style.display = 'none';
+                    
+                    wishlistGrid.innerHTML = products.map(product => `
+                        <div class="wishlist-card">
+                            <img src="${product.imageUrl || '/images/placeholder.jpg'}" alt="${product.name}" class="product-image">
+                            <div class="card-content">
+                                <div class="product-name">${product.name}</div>
+                                <div class="product-price">BDT ${product.price}</div>
+                                <button class="btn btn-cart" onclick="addToCart(${product.id})">Add to Cart</button>
+                                <button class="btn btn-remove" onclick="removeFromWishlist(${product.id})">Remove</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+            } catch (error) {
+                console.error('Error loading wishlist:', error);
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
+        
+        async function addToCart(productId) {
+            try {
+                const response = await fetch('/api/cart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: productId, quantity: 1 })
+                });
+                
+                if (response.ok) {
+                    alert('Product added to cart!');
+                } else {
+                    alert('Failed to add product to cart.');
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add product to cart.');
+            }
+        }
+        
+        async function removeFromWishlist(productId) {
+            try {
+                const response = await fetch(`/api/wishlist/remove/${productId}`, { method: 'DELETE' });
+                
+                if (response.ok) {
+                    alert('Product removed from wishlist!');
+                    loadWishlist();
+                } else {
+                    alert('Failed to remove product from wishlist.');
+                }
+            } catch (error) {
+                console.error('Error removing from wishlist:', error);
+                alert('Failed to remove product.');
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', loadWishlist);
+    </script>
+</body>
+</html>
